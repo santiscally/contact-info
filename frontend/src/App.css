@@ -1,0 +1,45 @@
+/* Sobrescribir algunos estilos de Bootstrap */
+.btn-primary {
+  background-color: #4e73df;
+  border-color: #4e73df;
+}
+
+.btn-primary:hover {
+  background-color: #2e59d9;
+  border-color: #2653d4;
+}
+
+.btn-outline-primary {
+  color: #4e73df;
+  border-color: #4e73df;
+}
+
+.btn-outline-primary:hover {
+  background-color: #4e73df;
+  border-color: #4e73df;
+}
+
+.bg-primary {
+  background-color: #4e73df !important;
+}
+
+/* Añadir más estilos personalizados según sea necesario */
+body {
+  min-height: 100vh;
+  background-color: #f8f9fc;
+}
+
+.card {
+  border-radius: 10px;
+  box-shadow: 0 0.15rem 1.75rem 0 rgb(58 59 69 / 15%);
+  border: none;
+}
+
+.navbar {
+  box-shadow: 0 0.15rem 1.75rem 0 rgb(58 59 69 / 15%);
+}
+
+.table {
+  border-radius: 10px;
+  overflow: hidden;
+}

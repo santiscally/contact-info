@@ -1,0 +1,53 @@
+version: '3'
+
+services:
+  # Servicio de la base de datos MongoDB
+  mongo:
+    image: mongo:6.0
+    container_name: pyme-mongo
+    restart: always
+    volumes:
+      - mongodb_data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - pyme-network
+
+  # Servicio del backend
+  backend:
+    build: ./backend
+    container_name: pyme-backend
+    restart: always
+    depends_on:
+      - mongo
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://mongo:27017/pyme_contacts
+      - JWT_SECRET=tu_clave_secreta_jwt_muy_segura
+      - PORT=5000
+      # Añade aquí el resto de variables de entorno
+    networks:
+      - pyme-network
+
+  # Servicio del frontend
+  frontend:
+    build: ./frontend
+    container_name: pyme-frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    environment:
+      - REACT_APP_API_URL=http://localhost:5000/api
+    networks:
+      - pyme-network
+
+networks:
+  pyme-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
