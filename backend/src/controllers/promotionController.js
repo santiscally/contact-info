@@ -1,5 +1,5 @@
 const Contact = require('../models/Contact');
-const emailService = require('../services/emailService');
+const emailService = require('../services/emailServiceSendGrid');
 const whatsappService = require('../services/whatsappService');
 
 // @desc    Enviar email promocional a un contacto
@@ -19,11 +19,12 @@ const sendEmailPromotion = async (req, res) => {
       return res.status(401).json({ message: 'No autorizado' });
     }
 
-    // Enviar email
+    // Enviar email - Si no se proporciona contenido, se usará la plantilla por defecto
     const result = await emailService.sendPromotionalEmail(
       contact.email,
       subject,
-      content
+      content,
+      contact.name // Pasamos el nombre del contacto para personalizar la plantilla
     );
 
     if (result.success) {
@@ -61,7 +62,7 @@ const sendWhatsAppPromotion = async (req, res) => {
     // Enviar WhatsApp
     const result = await whatsappService.sendWhatsAppMessage(
       contact.phone,
-      message
+      message || `Hola ${contact.name}, somos Simple Apps. Creamos soluciones simples para necesidades complejas. Descubre cómo podemos ayudarte a transformar tu negocio: https://simpleapps.com.ar`
     );
 
     if (result.success) {
@@ -79,4 +80,16 @@ const sendWhatsAppPromotion = async (req, res) => {
   }
 };
 
-module.exports = { sendEmailPromotion, sendWhatsAppPromotion };
+// @desc    Verificar estado de WhatsApp
+// @route   GET /api/promotions/whatsapp-status
+// @access  Private
+const getWhatsAppStatus = async (req, res) => {
+  const status = whatsappService.getWhatsAppStatus();
+  res.json(status);
+};
+
+module.exports = { 
+  sendEmailPromotion, 
+  sendWhatsAppPromotion,
+  getWhatsAppStatus
+};

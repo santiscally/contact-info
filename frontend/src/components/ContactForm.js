@@ -33,9 +33,40 @@ const ContactForm = ({
     });
   };
 
+  const formatPhoneNumber = (phone) => {
+    // Si no comienza con +, asumimos que necesita el prefijo de Argentina
+    if (!phone.startsWith('+')) {
+      // Eliminar cualquier carácter no numérico
+      let cleanNumber = phone.replace(/\D/g, '');
+      
+      // Si comienza con 0, quitarlo
+      if (cleanNumber.startsWith('0')) {
+        cleanNumber = cleanNumber.substring(1);
+      }
+      
+      // Si comienza con 15 después del código de área (normalmente 2-4 dígitos), reordenar
+      const match = cleanNumber.match(/^(\d{2,4})(15)(\d+)$/);
+      if (match) {
+        cleanNumber = match[1] + match[3];
+      }
+      
+      // Añadir el prefijo de Argentina +549
+      return `+549${cleanNumber}`;
+    }
+    
+    return phone;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    
+    // Formatear el número de teléfono antes de enviar
+    const formattedData = {
+      ...formData,
+      phone: formatPhoneNumber(formData.phone)
+    };
+    
+    onSubmit(formattedData);
   };
 
   return (
@@ -75,8 +106,12 @@ const ContactForm = ({
           name="phone"
           value={formData.phone}
           onChange={handleChange}
+          placeholder="+5491123456789"
           required
         />
+        <div className="form-text">
+          Formato recomendado: +549 seguido del número sin 0 y sin 15. Ejemplo: +5491123456789
+        </div>
       </div>
       
       <div className="mb-3">

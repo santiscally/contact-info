@@ -1,52 +1,40 @@
-const { Client } = require('whatsapp-web.js');
-const qrcode = require('qrcode-terminal');
+const axios = require('axios');
 
-let client;
-let isReady = false;
-
+// Inicialización (simplemente para mantener la compatibilidad)
 const initWhatsApp = () => {
-  // Crear cliente de WhatsApp
-  client = new Client();
-
-  // Generar QR para autenticación
-  client.on('qr', (qr) => {
-    console.log('QR GENERADO: Escanea con tu dispositivo WhatsApp');
-    qrcode.generate(qr, { small: true });
-  });
-
-  // Evento de conexión
-  client.on('ready', () => {
-    console.log('Cliente WhatsApp conectado y listo');
-    isReady = true;
-  });
-
-  // Iniciar cliente
-  client.initialize();
+  console.log('Servicio de WhatsApp simulado inicializado');
+  return true;
 };
 
-// Enviar mensaje de WhatsApp
-const sendWhatsAppMessage = async (phoneNumber, message) => {
-  if (!isReady) {
-    return { success: false, error: 'Cliente WhatsApp no inicializado o no listo' };
-  }
+// Verificar estado (siempre devuelve que está listo)
+const getWhatsAppStatus = () => {
+  return {
+    isReady: true,
+    isInitializing: false,
+    hasQR: false,
+    qrCode: null
+  };
+};
 
+// Enviar mensaje de WhatsApp (simulado)
+const sendWhatsAppMessage = async (phoneNumber, message, contactName = '') => {
   try {
-    // Formato internacional requerido por WhatsApp-web.js
-    // Ejemplo: 34612345678 (sin + ni espacios)
-    // Asegurar que el número no tenga el símbolo + ni otros caracteres no numéricos
-    const formattedNumber = phoneNumber.replace(/\D/g, '');
+    console.log(`[SIMULACIÓN] Enviando WhatsApp a: ${phoneNumber}`);
     
-    // Número con formato para WhatsApp-web.js
-    const chatId = `${formattedNumber}@c.us`;
-    
-    // Enviar mensaje
-    const result = await client.sendMessage(chatId, message);
-    
-    return { success: true, messageId: result.id.id };
+    // Simulamos una respuesta exitosa
+    return {
+      success: true,
+      messageId: `simulated_${Date.now()}`,
+      message: `SIMULACIÓN: Mensaje enviado con éxito a ${phoneNumber}`
+    };
   } catch (error) {
-    console.error('Error al enviar mensaje WhatsApp:', error);
+    console.error('Error en simulación de WhatsApp:', error);
     return { success: false, error: error.message };
   }
 };
 
-module.exports = { initWhatsApp, sendWhatsAppMessage };
+module.exports = { 
+  initWhatsApp, 
+  sendWhatsAppMessage, 
+  getWhatsAppStatus 
+};

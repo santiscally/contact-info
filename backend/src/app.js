@@ -10,8 +10,8 @@ dotenv.config();
 // Conectar a la base de datos
 connectDB();
 
-// Inicializar WhatsApp (opcional, se puede comentar si no se desea usar en desarrollo)
-// initWhatsApp();
+// Inicializar WhatsApp (versión simplificada sin QR)
+//initWhatsApp();
 
 const app = express();
 

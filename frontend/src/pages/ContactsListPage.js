@@ -14,9 +14,16 @@ const ContactsListPage = () => {
     contact: null,
     isLoading: false
   });
+  const [whatsappStatus, setWhatsappStatus] = useState({
+    isReady: false,
+    isInitializing: false,
+    hasQR: false,
+    qrCode: null
+  });
 
   useEffect(() => {
     fetchContacts();
+    checkWhatsAppStatus();
   }, []);
 
   const fetchContacts = async () => {
@@ -30,6 +37,15 @@ const ContactsListPage = () => {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkWhatsAppStatus = async () => {
+    try {
+      const response = await contactService.getWhatsAppStatus();
+      setWhatsappStatus(response.data);
+    } catch (err) {
+      console.error('Error al verificar estado de WhatsApp:', err);
     }
   };
 
@@ -54,7 +70,10 @@ const ContactsListPage = () => {
     });
   };
 
-  const openWhatsAppModal = (contact) => {
+  const openWhatsAppModal = async (contact) => {
+    // Verificar estado de WhatsApp antes de abrir el modal
+    await checkWhatsAppStatus();
+    
     setModalState({
       isOpen: true,
       type: 'whatsapp',
@@ -77,15 +96,34 @@ const ContactsListPage = () => {
         isLoading: true
       });
 
+      let response;
       if (modalState.type === 'email') {
-        await contactService.sendEmail(modalState.contact._id, {
+        response = await contactService.sendEmail(modalState.contact._id, {
           subject: data.subject,
           content: data.content
         });
       } else {
-        await contactService.sendWhatsApp(modalState.contact._id, {
+        response = await contactService.sendWhatsApp(modalState.contact._id, {
           message: data.message
         });
+        
+        // Si recibimos un QR, actualizar el estado
+        if (response.data && response.data.needsQR) {
+          setWhatsappStatus({
+            isReady: false,
+            isInitializing: true,
+            hasQR: true,
+            qrCode: response.data.qrCode
+          });
+          
+          // No cerrar el modal en este caso para mostrar el QR
+          setModalState({
+            ...modalState,
+            isLoading: false
+          });
+          
+          return;
+        }
       }
 
       // Actualizar contacto en la lista con la nueva fecha de último contacto
@@ -94,8 +132,14 @@ const ContactsListPage = () => {
       closeModal();
       alert(`${modalState.type === 'email' ? 'Email' : 'WhatsApp'} enviado correctamente.`);
     } catch (err) {
-      alert(`Error al enviar ${modalState.type === 'email' ? 'email' : 'WhatsApp'}.`);
+      const errorMsg = err.response?.data?.error || `Error al enviar ${modalState.type === 'email' ? 'email' : 'WhatsApp'}.`;
+      alert(errorMsg);
       console.error(err);
+      
+      // Si el error es de WhatsApp, verificar el estado
+      if (modalState.type === 'whatsapp') {
+        checkWhatsAppStatus();
+      }
     } finally {
       setModalState({
         ...modalState,
@@ -137,6 +181,7 @@ const ContactsListPage = () => {
         type={modalState.type}
         onSubmit={handleSendPromotion}
         isLoading={modalState.isLoading}
+        whatsappStatus={whatsappStatus}
       />
     </div>
   );
