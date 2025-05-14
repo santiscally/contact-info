@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Table, Button, Spinner, Alert, Badge, Tabs, Tab } from 'react-bootstrap';
+import { Container, Row, Col, Card, Table, Button, Spinner, Alert, Badge, Tabs, Tab, Form } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { contactService } from '../services/api';
 import ContactsMap from '../components/ContactsMap';
 
 const ContactsListPage = () => {
   const [contacts, setContacts] = useState([]);
+  const [filteredContacts, setFilteredContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('lista');
   const navigate = useNavigate();
+  
+  // State for filters
+  const [statusFilter, setStatusFilter] = useState('');
+  const [creatorFilter, setCreatorFilter] = useState('');
+  const [uniqueCreators, setUniqueCreators] = useState([]);
   
   // Estado para manejar múltiples botones de WhatsApp
   const [whatsappLoading, setWhatsappLoading] = useState({});
@@ -32,6 +38,14 @@ const ContactsListPage = () => {
       try {
         const response = await contactService.getContacts();
         setContacts(response.data);
+        setFilteredContacts(response.data);
+        
+        // Extract unique creators for filter dropdown
+        const creators = [...new Set(response.data.map(contact => 
+          contact.user ? contact.user.name : 'Desconocido'
+        ))];
+        setUniqueCreators(creators);
+        
         setLoading(false);
       } catch (err) {
         setError('Error al cargar contactos. Por favor, inténtalo de nuevo.');
@@ -41,6 +55,31 @@ const ContactsListPage = () => {
 
     fetchContacts();
   }, []);
+  
+  // Apply filters when filter state changes
+  useEffect(() => {
+    let result = contacts;
+    
+    // Apply status filter
+    if (statusFilter) {
+      result = result.filter(contact => contact.status === statusFilter);
+    }
+    
+    // Apply creator filter
+    if (creatorFilter) {
+      result = result.filter(contact => 
+        contact.user && contact.user.name === creatorFilter
+      );
+    }
+    
+    setFilteredContacts(result);
+  }, [statusFilter, creatorFilter, contacts]);
+  
+  // Reset filters
+  const handleResetFilters = () => {
+    setStatusFilter('');
+    setCreatorFilter('');
+  };
 
   const handleDelete = async (id) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este contacto?')) {
@@ -182,7 +221,7 @@ const ContactsListPage = () => {
       <Row>
         <Col>
           <div className="d-flex justify-content-between align-items-center mb-4">
-            <h2>Mis Contactos</h2>
+            <h2>Contactos</h2>
             <Button 
               variant="primary" 
               onClick={() => navigate('/contacts/new')}
@@ -217,25 +256,68 @@ const ContactsListPage = () => {
             className="mb-3"
           >
             <Tab eventKey="lista" title="Lista de Contactos">
-              <Card className="shadow">
+              <Card className="shadow mb-4">
+                <Card.Header className="bg-light">
+                  <h5 className="mb-3">Filtros</h5>
+                  <Row>
+                    <Col md={4}>
+                      <Form.Group className="mb-2">
+                        <Form.Label>Estado:</Form.Label>
+                        <Form.Select 
+                          value={statusFilter} 
+                          onChange={(e) => setStatusFilter(e.target.value)}
+                        >
+                          <option value="">Todos los estados</option>
+                          <option value="interesado">Interesado</option>
+                          <option value="no mostró interés">No mostró interés</option>
+                          <option value="cliente">Cliente</option>
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+                    <Col md={4}>
+                      <Form.Group className="mb-2">
+                        <Form.Label>Creado por:</Form.Label>
+                        <Form.Select 
+                          value={creatorFilter} 
+                          onChange={(e) => setCreatorFilter(e.target.value)}
+                        >
+                          <option value="">Todos los usuarios</option>
+                          {uniqueCreators.map((creator, index) => (
+                            <option key={index} value={creator}>
+                              {creator}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+                    <Col md={4} className="d-flex align-items-end">
+                      <Button 
+                        variant="secondary" 
+                        className="mb-2"
+                        onClick={handleResetFilters}
+                      >
+                        Limpiar filtros
+                      </Button>
+                    </Col>
+                  </Row>
+                </Card.Header>
                 <Card.Body>
                   {loading ? (
                     <div className="text-center py-5">
                       <Spinner animation="border" variant="primary" />
                       <p className="mt-3">Cargando contactos...</p>
                     </div>
-                  ) : contacts.length === 0 ? (
+                  ) : filteredContacts.length === 0 ? (
                     <div className="text-center py-5">
-                      <i className="bi bi-person-x" style={{ fontSize: '3rem' }}></i>
-                      <h4 className="mt-3">No tienes contactos todavía</h4>
-                      <p className="text-muted">Comienza añadiendo tu primer contacto</p>
+                      <i className="bi bi-filter-circle" style={{ fontSize: '3rem' }}></i>
+                      <h4 className="mt-3">No hay contactos que coincidan con los filtros</h4>
+                      <p className="text-muted">Intenta con otros criterios de búsqueda</p>
                       <Button 
-                        variant="primary" 
-                        onClick={() => navigate('/contacts/new')}
-                        className="mt-2 d-flex align-items-center mx-auto"
+                        variant="outline-secondary" 
+                        onClick={handleResetFilters}
+                        className="mt-2"
                       >
-                        <i className="bi bi-plus-circle me-2"></i>
-                        Añadir contacto
+                        Limpiar filtros
                       </Button>
                     </div>
                   ) : (
@@ -249,12 +331,13 @@ const ContactsListPage = () => {
                             <th>Email</th>
                             <th>Dirección</th>
                             <th>Estado</th>
+                            <th>Creado por</th>
                             <th>Último contacto</th>
                             <th className="text-center">Acciones</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {contacts.map(contact => (
+                          {filteredContacts.map(contact => (
                             <tr key={contact._id}>
                               <td>{contact.name}</td>
                               <td>{contact.company}</td>
@@ -264,6 +347,11 @@ const ContactsListPage = () => {
                               <td>
                                 <Badge bg={getStatusBadgeColor(contact.status)}>
                                   {contact.status || 'interesado'}
+                                </Badge>
+                              </td>
+                              <td>
+                                <Badge bg="info" className="text-white">
+                                  {contact.user ? contact.user.name : 'Desconocido'}
                                 </Badge>
                               </td>
                               <td>
@@ -346,8 +434,8 @@ const ContactsListPage = () => {
               </Card>
             </Tab>
             <Tab eventKey="mapa" title="Mapa de Contactos">
-              {!loading && contacts.length > 0 ? (
-                <ContactsMap contacts={contacts} />
+              {!loading && filteredContacts.length > 0 ? (
+                <ContactsMap contacts={filteredContacts} />
               ) : loading ? (
                 <Card className="shadow">
                   <Card.Body className="text-center py-5">
@@ -360,7 +448,20 @@ const ContactsListPage = () => {
                   <Card.Body className="text-center py-5">
                     <i className="bi bi-map" style={{ fontSize: '3rem' }}></i>
                     <h4 className="mt-3">No hay contactos para mostrar en el mapa</h4>
-                    <p className="text-muted">Añade contactos con direcciones para visualizarlos</p>
+                    <p className="text-muted">
+                      {statusFilter || creatorFilter ? 
+                        'No hay contactos que coincidan con los filtros seleccionados' : 
+                        'Añade contactos con direcciones para visualizarlos'}
+                    </p>
+                    {(statusFilter || creatorFilter) && (
+                      <Button 
+                        variant="outline-secondary" 
+                        onClick={handleResetFilters}
+                        className="mt-2"
+                      >
+                        Limpiar filtros
+                      </Button>
+                    )}
                   </Card.Body>
                 </Card>
               )}

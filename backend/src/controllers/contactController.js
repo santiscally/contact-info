@@ -5,7 +5,9 @@ const Contact = require('../models/Contact');
 // @access  Private
 const getContacts = async (req, res) => {
   try {
-    const contacts = await Contact.find({ user: req.user._id });
+    // Obtener todos los contactos en lugar de filtrar por usuario actual
+    const contacts = await Contact.find()
+      .populate('user', 'name email'); // Incluir los detalles del usuario que creó el contacto
     res.json(contacts);
   } catch (error) {
     console.error(error);
