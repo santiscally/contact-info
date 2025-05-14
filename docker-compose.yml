@@ -32,18 +32,18 @@ services:
       - pyme-network
 
   # Servicio del frontend
-  frontend:
-    build: ./frontend
-    container_name: pyme-frontend
-    restart: always
-    depends_on:
-      - backend
-    ports:
-      - "81:81"
-    environment:
-      - REACT_APP_API_URL=http://localhost:5000/api
-    networks:
-      - pyme-network
+frontend:
+  build: ./frontend
+  container_name: pyme-frontend
+  restart: always
+  depends_on:
+    - backend
+  ports:
+    - "81:80"  # Esto es correcto: mapea puerto 81 del host al 80 del contenedor
+  environment:
+    - REACT_APP_API_URL=http://149.50.142.57:81/api  # Ajusta la URL para acceso externo
+  networks:
+    - pyme-network
 
 networks:
   pyme-network:
