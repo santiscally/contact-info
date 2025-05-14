@@ -8,7 +8,7 @@ const defaultEmailTemplate = (contactName) => {
   <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Simple Apps - Soluciones tecnológicas para tu negocio</title>
+      <title>Simple Apps - Soluciones tecnológicas personalizadas</title>
       <style>
           /* Estilos generales */
           body {
@@ -157,43 +157,43 @@ const defaultEmailTemplate = (contactName) => {
       <div class="container">
           <!-- Añadir instrucción para agregar a contactos -->
           <p style="font-size:12px; color:#666; text-align:center; padding:5px;">
-            ¿No ves correctamente este correo? 
+            ¿No ves correctamente este mensaje? 
             <a href="mailto:${process.env.EMAIL_FROM}?subject=Agregar%20a%20contactos" style="color:#4e73df;">
-              Agrega nuestra dirección a tus contactos
+              Añade nuestra dirección a tus contactos
             </a>
           </p>
           
           <div class="header">
               <h1>Simple Apps</h1>
-              <p>Soluciones tecnológicas para tu negocio</p>
+              <p>Soluciones tecnológicas personalizadas</p>
           </div>
           
           <div class="content">
-              <p class="intro">Creamos <span class="highlight">soluciones simples</span> para necesidades complejas</p>
+              <p class="intro">Desarrollamos <span class="highlight">soluciones sencillas</span> para desafíos complejos</p>
               
               <div class="message">
                   <p>Hola ${contactName},</p>
                   
-                  <p><strong>Simple Apps</strong> es tu aliado en tecnología, ideal para pequeños y medianos comercios. Te ayudamos a <span class="highlight">transformar</span> tus necesidades en herramientas que aumenten tu <span class="highlight">productividad.</span></p>
+                  <p><strong>Simple Apps</strong> es un colaborador tecnológico ideal para pequeños y medianos comercios. Podemos ayudarte a <span class="highlight">implementar</span> recursos que mejoren la <span class="highlight">eficiencia</span> de tu negocio.</p>
                   
-                  <p>Ofrecemos servicios de desarrollo de software para que puedas automatizar tareas, gestionar clientes, mejorar la comunicación, controlar el inventario y mucho más.</p>
+                  <p>Nuestros servicios de desarrollo incluyen herramientas para facilitar tareas cotidianas, administrar clientes, optimizar comunicaciones, organizar inventarios y otras funcionalidades adaptadas a tu negocio.</p>
               </div>
               
               <div class="benefits">
-                  <h3>¿Qué podemos hacer por ti?</h3>
+                  <h3>Nuestros servicios incluyen</h3>
                   <ul>
-                      <li><strong>Automatización de procesos</strong> - Ahorra tiempo y evita errores</li>
-                      <li><strong>Gestión de clientes</strong> - Organiza y aprovecha tu base de contactos</li>
-                      <li><strong>Aplicaciones a medida</strong> - Desarrolladas según tus necesidades específicas</li>
-                      <li><strong>Integraciones</strong> - Conecta tus sistemas existentes</li>
-                      <li><strong>Soluciones en la nube</strong> - Accede desde cualquier lugar</li>
+                      <li><strong>Automatización de tareas</strong> - Optimiza tiempos y reduce errores</li>
+                      <li><strong>Gestión de relaciones</strong> - Organiza y aprovecha tu red de contactos</li>
+                      <li><strong>Sistemas personalizados</strong> - Adaptados a tus requisitos específicos</li>
+                      <li><strong>Comunicación entre plataformas</strong> - Conecta tus sistemas actuales</li>
+                      <li><strong>Acceso remoto</strong> - Trabaja desde cualquier ubicación</li>
                   </ul>
               </div>
               
-              <p>Reservá tu consultoría inicial <strong>sin cargo</strong> y descubrí las posibilidades para tu negocio.</p>
+              <p>Agenda una consulta inicial <strong>gratuita</strong> para evaluar las opciones disponibles para tu empresa.</p>
               
               <div class="cta">
-                  <a href="https://simpleapps.com.ar" class="button">Descubrí más</a>
+                  <a href="https://simpleapps.com.ar" class="button">Más información</a>
               </div>
           </div>
           
@@ -205,7 +205,7 @@ const defaultEmailTemplate = (contactName) => {
               </p>
               <!-- Añadir opción de desuscripción -->
               <p style="font-size:11px; color:#999;">
-                  Si no deseas recibir más correos, 
+                  Si prefieres no recibir comunicaciones futuras, 
                   <a href="mailto:${process.env.EMAIL_FROM}?subject=Desuscribir" style="color:#999;">
                       haz clic aquí
                   </a>
@@ -234,15 +234,13 @@ const sendPromotionalEmail = async (to, subject, html, contactName = '') => {
         email: process.env.EMAIL_FROM,
         name: process.env.EMAIL_FROM_NAME || 'Simple Apps'
       },
+      replyTo: process.env.EMAIL_SUPPORT || process.env.EMAIL_FROM,
       subject: subject || "Conoce nuestras soluciones tecnológicas - Simple Apps",
       html: emailContent,
       trackingSettings: {
-        clickTracking: {
-          enable: true
-        },
-        openTracking: {
-          enable: true
-        }
+        click_tracking: { enable: true },
+        open_tracking: { enable: true },
+        subscription_tracking: { enable: true }
       },
       mailSettings: {
         bypassListManagement: {
@@ -256,7 +254,14 @@ const sendPromotionalEmail = async (to, subject, html, contactName = '') => {
         }
       },
       // Puedes añadir categorías para organizar tus emails
-      categories: ['promocion', 'bienvenida']
+      categories: ['promocion', 'bienvenida'],
+      headers: {
+        'List-Unsubscribe': `<mailto:${process.env.EMAIL_FROM}?subject=unsubscribe>`,
+        'Precedence': 'bulk',
+        'X-Auto-Response-Suppress': 'OOF, DR, RN, NRN, AutoReply',
+        'X-Report-Abuse': `<mailto:${process.env.EMAIL_FROM}?subject=abuse>`,
+        'Feedback-ID': 'PROMOCION:SimpleApps' // Facilita rastrear el rendimiento
+      }
     };
     
     // Enviar el email usando SendGrid

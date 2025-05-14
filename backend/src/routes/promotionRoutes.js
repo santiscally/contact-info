@@ -1,9 +1,9 @@
+
 const express = require('express');
 const router = express.Router();
 const {
   sendEmailPromotion,
-  sendWhatsAppPromotion,
-  getWhatsAppStatus
+  generateWhatsAppUrl
 } = require('../controllers/promotionController');
 const { protect } = require('../middleware/auth');
 
@@ -11,7 +11,6 @@ const { protect } = require('../middleware/auth');
 router.use(protect);
 
 router.post('/email/:id', sendEmailPromotion);
-router.post('/whatsapp/:id', sendWhatsAppPromotion);
-router.get('/whatsapp-status', getWhatsAppStatus);
+router.post('/whatsapp/:id', generateWhatsAppUrl);
 
 module.exports = router;

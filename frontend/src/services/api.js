@@ -40,7 +40,6 @@ export const contactService = {
   deleteContact: (id) => api.delete(`/contacts/${id}`),
   sendEmail: (id, emailData) => api.post(`/promotions/email/${id}`, emailData),
   sendWhatsApp: (id, whatsappData) => api.post(`/promotions/whatsapp/${id}`, whatsappData),
-  getWhatsAppStatus: () => api.get('/promotions/whatsapp-status'),
 };
 
 export default api;

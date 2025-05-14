@@ -41,11 +41,10 @@ const sendEmailPromotion = async (req, res) => {
     res.status(500).json({ message: 'Error del servidor' });
   }
 };
-
-// @desc    Enviar WhatsApp promocional a un contacto
+// @desc    Generar URL de WhatsApp para un contacto
 // @route   POST /api/promotions/whatsapp/:id
 // @access  Private
-const sendWhatsAppPromotion = async (req, res) => {
+const generateWhatsAppUrl = async (req, res) => {
   try {
     const { message } = req.body;
     const contact = await Contact.findById(req.params.id);
@@ -59,10 +58,14 @@ const sendWhatsAppPromotion = async (req, res) => {
       return res.status(401).json({ message: 'No autorizado' });
     }
 
-    // Enviar WhatsApp
-    const result = await whatsappService.sendWhatsAppMessage(
+    // Mensaje predeterminado si no se proporciona uno
+    const defaultMessage = `Hola {name}, somos Simple Apps. Creamos soluciones simples para necesidades complejas. Descubre cómo podemos ayudarte a transformar tu negocio.`;
+    
+    // Generar URL de WhatsApp
+    const result = whatsappService.generateWhatsAppUrl(
       contact.phone,
-      message || `Hola ${contact.name}, somos Simple Apps. Creamos soluciones simples para necesidades complejas. Descubre cómo podemos ayudarte a transformar tu negocio: https://simpleapps.com.ar`
+      message || defaultMessage,
+      contact.name // Para personalizar el mensaje con el nombre
     );
 
     if (result.success) {
@@ -70,9 +73,9 @@ const sendWhatsAppPromotion = async (req, res) => {
       contact.lastContact = Date.now();
       await contact.save();
       
-      res.json({ success: true, messageId: result.messageId });
+      res.json({ success: true, whatsappUrl: result.url });
     } else {
-      res.status(500).json({ message: 'Error al enviar WhatsApp', error: result.error });
+      res.status(500).json({ message: 'Error al generar URL de WhatsApp', error: result.error });
     }
   } catch (error) {
     console.error(error);
@@ -80,16 +83,7 @@ const sendWhatsAppPromotion = async (req, res) => {
   }
 };
 
-// @desc    Verificar estado de WhatsApp
-// @route   GET /api/promotions/whatsapp-status
-// @access  Private
-const getWhatsAppStatus = async (req, res) => {
-  const status = whatsappService.getWhatsAppStatus();
-  res.json(status);
-};
-
 module.exports = { 
   sendEmailPromotion, 
-  sendWhatsAppPromotion,
-  getWhatsAppStatus
+  generateWhatsAppUrl
 };

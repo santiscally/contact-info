@@ -2,16 +2,12 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
-const { initWhatsApp } = require('./services/whatsappService');
 
 // Cargar variables de entorno
 dotenv.config();
 
 // Conectar a la base de datos
 connectDB();
-
-// Inicializar WhatsApp (versión simplificada sin QR)
-//initWhatsApp();
 
 const app = express();
 
