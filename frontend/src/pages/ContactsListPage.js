@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Table, Button, Spinner, Alert, Badge } from 'react-bootstrap';
+import { Container, Row, Col, Card, Table, Button, Spinner, Alert, Badge, Tabs, Tab } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { contactService } from '../services/api';
+import ContactsMap from '../components/ContactsMap';
 
 const ContactsListPage = () => {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('lista');
   const navigate = useNavigate();
   
   // Estado para manejar múltiples botones de WhatsApp
@@ -160,6 +162,20 @@ const ContactsListPage = () => {
       day: 'numeric'
     }).format(date);
   };
+  
+  // Obtener color de badge según estado del contacto
+  const getStatusBadgeColor = (status) => {
+    switch(status) {
+      case 'cliente':
+        return 'success';
+      case 'interesado':
+        return 'warning';
+      case 'no mostró interés':
+        return 'secondary';
+      default:
+        return 'info';
+    }
+  };
 
   return (
     <Container className="py-4">
@@ -195,125 +211,161 @@ const ContactsListPage = () => {
             <Alert variant="success">{emailStatus.success}</Alert>
           )}
           
-          <Card className="shadow">
-            <Card.Body>
-              {loading ? (
-                <div className="text-center py-5">
-                  <Spinner animation="border" variant="primary" />
-                  <p className="mt-3">Cargando contactos...</p>
-                </div>
-              ) : contacts.length === 0 ? (
-                <div className="text-center py-5">
-                  <i className="bi bi-person-x" style={{ fontSize: '3rem' }}></i>
-                  <h4 className="mt-3">No tienes contactos todavía</h4>
-                  <p className="text-muted">Comienza añadiendo tu primer contacto</p>
-                  <Button 
-                    variant="primary" 
-                    onClick={() => navigate('/contacts/new')}
-                    className="mt-2 d-flex align-items-center mx-auto"
-                  >
-                    <i className="bi bi-plus-circle me-2"></i>
-                    Añadir contacto
-                  </Button>
-                </div>
+          <Tabs
+            activeKey={activeTab}
+            onSelect={(k) => setActiveTab(k)}
+            className="mb-3"
+          >
+            <Tab eventKey="lista" title="Lista de Contactos">
+              <Card className="shadow">
+                <Card.Body>
+                  {loading ? (
+                    <div className="text-center py-5">
+                      <Spinner animation="border" variant="primary" />
+                      <p className="mt-3">Cargando contactos...</p>
+                    </div>
+                  ) : contacts.length === 0 ? (
+                    <div className="text-center py-5">
+                      <i className="bi bi-person-x" style={{ fontSize: '3rem' }}></i>
+                      <h4 className="mt-3">No tienes contactos todavía</h4>
+                      <p className="text-muted">Comienza añadiendo tu primer contacto</p>
+                      <Button 
+                        variant="primary" 
+                        onClick={() => navigate('/contacts/new')}
+                        className="mt-2 d-flex align-items-center mx-auto"
+                      >
+                        <i className="bi bi-plus-circle me-2"></i>
+                        Añadir contacto
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="table-responsive">
+                      <Table hover className="align-middle">
+                        <thead>
+                          <tr>
+                            <th>Nombre</th>
+                            <th>Empresa</th>
+                            <th>Teléfono</th>
+                            <th>Email</th>
+                            <th>Dirección</th>
+                            <th>Estado</th>
+                            <th>Último contacto</th>
+                            <th className="text-center">Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {contacts.map(contact => (
+                            <tr key={contact._id}>
+                              <td>{contact.name}</td>
+                              <td>{contact.company}</td>
+                              <td>{contact.phone}</td>
+                              <td>{contact.email}</td>
+                              <td>{contact.address || 'No especificada'}</td>
+                              <td>
+                                <Badge bg={getStatusBadgeColor(contact.status)}>
+                                  {contact.status || 'interesado'}
+                                </Badge>
+                              </td>
+                              <td>
+                                {contact.lastContact ? (
+                                  <Badge bg="info" pill className="py-1 px-2">
+                                    {formatDate(contact.lastContact)}
+                                  </Badge>
+                                ) : (
+                                  <Badge bg="secondary" pill className="py-1 px-2">
+                                    Sin contacto
+                                  </Badge>
+                                )}
+                              </td>
+                              <td>
+                                <div className="d-flex justify-content-center gap-2">
+                                  {/* Botón de WhatsApp mejorado */}
+                                  <Button
+                                    variant="success"
+                                    size="sm"
+                                    onClick={() => handleSendWhatsApp(contact._id, contact.name)}
+                                    disabled={whatsappLoading[contact._id]}
+                                    title="Enviar promoción por WhatsApp"
+                                    className="d-flex align-items-center justify-content-center"
+                                    style={{ width: '38px', height: '38px' }}
+                                  >
+                                    {whatsappLoading[contact._id] ? (
+                                      <Spinner animation="border" size="sm" />
+                                    ) : (
+                                      <i className="bi bi-whatsapp" style={{ fontSize: '1.2rem' }}></i>
+                                    )}
+                                  </Button>
+                                  
+                                  {/* Botón de Email */}
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={() => handleSendEmail(contact._id, contact.name, contact.email)}
+                                    disabled={emailLoading[contact._id]}
+                                    title="Enviar promoción por Email"
+                                    className="d-flex align-items-center justify-content-center"
+                                    style={{ width: '38px', height: '38px' }}
+                                  >
+                                    {emailLoading[contact._id] ? (
+                                      <Spinner animation="border" size="sm" />
+                                    ) : (
+                                      <i className="bi bi-envelope" style={{ fontSize: '1.2rem' }}></i>
+                                    )}
+                                  </Button>
+                                  
+                                  {/* Botón de Editar mejorado */}
+                                  <Link 
+                                    to={`/contacts/edit/${contact._id}`} 
+                                    className="btn btn-secondary btn-sm d-flex align-items-center justify-content-center"
+                                    title="Editar contacto"
+                                    style={{ width: '38px', height: '38px' }}
+                                  >
+                                    <i className="bi bi-pencil" style={{ fontSize: '1.2rem' }}></i>
+                                  </Link>
+                                  
+                                  {/* Botón de Eliminar mejorado */}
+                                  <Button
+                                    variant="danger"
+                                    size="sm"
+                                    onClick={() => handleDelete(contact._id)}
+                                    title="Eliminar contacto"
+                                    className="d-flex align-items-center justify-content-center"
+                                    style={{ width: '38px', height: '38px' }}
+                                  >
+                                    <i className="bi bi-trash" style={{ fontSize: '1.2rem' }}></i>
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </Table>
+                    </div>
+                  )}
+                </Card.Body>
+              </Card>
+            </Tab>
+            <Tab eventKey="mapa" title="Mapa de Contactos">
+              {!loading && contacts.length > 0 ? (
+                <ContactsMap contacts={contacts} />
+              ) : loading ? (
+                <Card className="shadow">
+                  <Card.Body className="text-center py-5">
+                    <Spinner animation="border" variant="primary" />
+                    <p className="mt-3">Cargando contactos...</p>
+                  </Card.Body>
+                </Card>
               ) : (
-                <div className="table-responsive">
-                  <Table hover className="align-middle">
-                    <thead>
-                      <tr>
-                        <th>Nombre</th>
-                        <th>Empresa</th>
-                        <th>Teléfono</th>
-                        <th>Email</th>
-                        <th>Último contacto</th>
-                        <th className="text-center">Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {contacts.map(contact => (
-                        <tr key={contact._id}>
-                          <td>{contact.name}</td>
-                          <td>{contact.company}</td>
-                          <td>{contact.phone}</td>
-                          <td>{contact.email}</td>
-                          <td>
-                            {contact.lastContact ? (
-                              <Badge bg="info" pill className="py-1 px-2">
-                                {formatDate(contact.lastContact)}
-                              </Badge>
-                            ) : (
-                              <Badge bg="secondary" pill className="py-1 px-2">
-                                Sin contacto
-                              </Badge>
-                            )}
-                          </td>
-                          <td>
-                            <div className="d-flex justify-content-center gap-2">
-                              {/* Botón de WhatsApp mejorado */}
-                              <Button
-                                variant="success"
-                                size="sm"
-                                onClick={() => handleSendWhatsApp(contact._id, contact.name)}
-                                disabled={whatsappLoading[contact._id]}
-                                title="Enviar promoción por WhatsApp"
-                                className="d-flex align-items-center justify-content-center"
-                                style={{ width: '38px', height: '38px' }}
-                              >
-                                {whatsappLoading[contact._id] ? (
-                                  <Spinner animation="border" size="sm" />
-                                ) : (
-                                  <i className="bi bi-whatsapp" style={{ fontSize: '1.2rem' }}></i>
-                                )}
-                              </Button>
-                              
-                              {/* Botón de Email */}
-                              <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={() => handleSendEmail(contact._id, contact.name, contact.email)}
-                                disabled={emailLoading[contact._id]}
-                                title="Enviar promoción por Email"
-                                className="d-flex align-items-center justify-content-center"
-                                style={{ width: '38px', height: '38px' }}
-                              >
-                                {emailLoading[contact._id] ? (
-                                  <Spinner animation="border" size="sm" />
-                                ) : (
-                                  <i className="bi bi-envelope" style={{ fontSize: '1.2rem' }}></i>
-                                )}
-                              </Button>
-                              
-                              {/* Botón de Editar mejorado */}
-                              <Link 
-                                to={`/contacts/edit/${contact._id}`} 
-                                className="btn btn-secondary btn-sm d-flex align-items-center justify-content-center"
-                                title="Editar contacto"
-                                style={{ width: '38px', height: '38px' }}
-                              >
-                                <i className="bi bi-pencil" style={{ fontSize: '1.2rem' }}></i>
-                              </Link>
-                              
-                              {/* Botón de Eliminar mejorado */}
-                              <Button
-                                variant="danger"
-                                size="sm"
-                                onClick={() => handleDelete(contact._id)}
-                                title="Eliminar contacto"
-                                className="d-flex align-items-center justify-content-center"
-                                style={{ width: '38px', height: '38px' }}
-                              >
-                                <i className="bi bi-trash" style={{ fontSize: '1.2rem' }}></i>
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-                </div>
+                <Card className="shadow">
+                  <Card.Body className="text-center py-5">
+                    <i className="bi bi-map" style={{ fontSize: '3rem' }}></i>
+                    <h4 className="mt-3">No hay contactos para mostrar en el mapa</h4>
+                    <p className="text-muted">Añade contactos con direcciones para visualizarlos</p>
+                  </Card.Body>
+                </Card>
               )}
-            </Card.Body>
-          </Card>
+            </Tab>
+          </Tabs>
         </Col>
       </Row>
     </Container>

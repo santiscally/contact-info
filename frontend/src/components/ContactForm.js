@@ -1,30 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { Form, Button, Spinner } from 'react-bootstrap';
 
-const ContactForm = ({ 
-  contact = {}, 
-  onSubmit, 
-  isLoading = false,
-  isEditing = false 
-}) => {
+const ContactForm = ({ contact, onSubmit, isLoading, isEditing = false }) => {
   const [formData, setFormData] = useState({
-    name: '',
-    company: '',
-    phone: '',
-    email: '',
-    notes: ''
+    name: contact?.name || '',
+    company: contact?.company || '',
+    phone: contact?.phone || '',
+    email: contact?.email || '',
+    address: contact?.address || '',
+    notes: contact?.notes || '',
+    status: contact?.status || 'interesado'
   });
-
-  useEffect(() => {
-    if (isEditing && contact) {
-      setFormData({
-        name: contact.name || '',
-        company: contact.company || '',
-        phone: contact.phone || '',
-        email: contact.email || '',
-        notes: contact.notes || ''
-      });
-    }
-  }, [contact, isEditing]);
 
   const handleChange = (e) => {
     setFormData({
@@ -33,123 +19,110 @@ const ContactForm = ({
     });
   };
 
-  const formatPhoneNumber = (phone) => {
-    // Si no comienza con +, asumimos que necesita el prefijo de Argentina
-    if (!phone.startsWith('+')) {
-      // Eliminar cualquier carácter no numérico
-      let cleanNumber = phone.replace(/\D/g, '');
-      
-      // Si comienza con 0, quitarlo
-      if (cleanNumber.startsWith('0')) {
-        cleanNumber = cleanNumber.substring(1);
-      }
-      
-      // Si comienza con 15 después del código de área (normalmente 2-4 dígitos), reordenar
-      const match = cleanNumber.match(/^(\d{2,4})(15)(\d+)$/);
-      if (match) {
-        cleanNumber = match[1] + match[3];
-      }
-      
-      // Añadir el prefijo de Argentina +549
-      return `+549${cleanNumber}`;
-    }
-    
-    return phone;
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // Formatear el número de teléfono antes de enviar
-    const formattedData = {
-      ...formData,
-      phone: formatPhoneNumber(formData.phone)
-    };
-    
-    onSubmit(formattedData);
+    onSubmit(formData);
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="mb-3">
-        <label htmlFor="name" className="form-label">Nombre</label>
-        <input
+    <Form onSubmit={handleSubmit}>
+      <Form.Group className="mb-3">
+        <Form.Label>Nombre</Form.Label>
+        <Form.Control
           type="text"
-          className="form-control"
-          id="name"
           name="name"
           value={formData.name}
           onChange={handleChange}
           required
         />
-      </div>
-      
-      <div className="mb-3">
-        <label htmlFor="company" className="form-label">Empresa</label>
-        <input
+      </Form.Group>
+
+      <Form.Group className="mb-3">
+        <Form.Label>Empresa</Form.Label>
+        <Form.Control
           type="text"
-          className="form-control"
-          id="company"
           name="company"
           value={formData.company}
           onChange={handleChange}
           required
         />
-      </div>
-      
-      <div className="mb-3">
-        <label htmlFor="phone" className="form-label">Teléfono</label>
-        <input
-          type="tel"
-          className="form-control"
-          id="phone"
+      </Form.Group>
+
+      <Form.Group className="mb-3">
+        <Form.Label>Teléfono</Form.Label>
+        <Form.Control
+          type="text"
           name="phone"
           value={formData.phone}
           onChange={handleChange}
-          placeholder="+5491123456789"
           required
         />
-        <div className="form-text">
-          Formato recomendado: +549 seguido del número sin 0 y sin 15. Ejemplo: +5491123456789
-        </div>
-      </div>
-      
-      <div className="mb-3">
-        <label htmlFor="email" className="form-label">Email</label>
-        <input
+      </Form.Group>
+
+      <Form.Group className="mb-3">
+        <Form.Label>Email</Form.Label>
+        <Form.Control
           type="email"
-          className="form-control"
-          id="email"
           name="email"
           value={formData.email}
           onChange={handleChange}
           required
         />
-      </div>
-      
-      <div className="mb-3">
-        <label htmlFor="notes" className="form-label">Notas</label>
-        <textarea
-          className="form-control"
-          id="notes"
+      </Form.Group>
+
+      <Form.Group className="mb-3">
+        <Form.Label>Dirección</Form.Label>
+        <Form.Control
+          type="text"
+          name="address"
+          value={formData.address}
+          onChange={handleChange}
+          placeholder="Calle y altura"
+        />
+      </Form.Group>
+
+      <Form.Group className="mb-3">
+        <Form.Label>Estado</Form.Label>
+        <Form.Select
+          name="status"
+          value={formData.status}
+          onChange={handleChange}
+        >
+          <option value="interesado">Interesado</option>
+          <option value="no mostró interés">No mostró interés</option>
+          <option value="cliente">Cliente</option>
+        </Form.Select>
+      </Form.Group>
+
+      <Form.Group className="mb-3">
+        <Form.Label>Observaciones</Form.Label>
+        <Form.Control
+          as="textarea"
+          rows={3}
           name="notes"
           value={formData.notes}
           onChange={handleChange}
-          rows="3"
-        ></textarea>
-      </div>
-      
-      <button 
-        type="submit" 
-        className="btn btn-primary"
-        disabled={isLoading}
-      >
+        />
+      </Form.Group>
+
+      <Button variant="primary" type="submit" disabled={isLoading}>
         {isLoading ? (
-          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-        ) : null}
-        {isEditing ? 'Actualizar Contacto' : 'Crear Contacto'}
-      </button>
-    </form>
+          <>
+            <Spinner
+              as="span"
+              animation="border"
+              size="sm"
+              role="status"
+              aria-hidden="true"
+              className="me-2"
+            />
+            {isEditing ? 'Actualizando...' : 'Guardando...'}
+          </>
+        ) : (
+          isEditing ? 'Actualizar Contacto' : 'Guardar Contacto'
+        )}
+      </Button>
+    </Form>
   );
 };
 

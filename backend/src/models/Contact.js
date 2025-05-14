@@ -22,8 +22,18 @@ const ContactSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  address: {
+    type: String,
+    default: ''
+  },
   notes: {
-    type: String
+    type: String,
+    default: ''
+  },
+  status: {
+    type: String,
+    enum: ['interesado', 'no mostró interés', 'cliente'],
+    default: 'interesado'
   },
   lastContact: {
     type: Date

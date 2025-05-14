@@ -18,7 +18,7 @@ const getContacts = async (req, res) => {
 // @access  Private
 const createContact = async (req, res) => {
   try {
-    const { name, company, phone, email, notes } = req.body;
+    const { name, company, phone, email, address, notes, status } = req.body;
 
     const contact = await Contact.create({
       user: req.user._id,
@@ -26,7 +26,9 @@ const createContact = async (req, res) => {
       company,
       phone,
       email,
-      notes
+      address,
+      notes,
+      status
     });
 
     res.status(201).json(contact);
@@ -64,7 +66,7 @@ const getContactById = async (req, res) => {
 // @access  Private
 const updateContact = async (req, res) => {
   try {
-    const { name, company, phone, email, notes } = req.body;
+    const { name, company, phone, email, address, notes, status } = req.body;
 
     let contact = await Contact.findById(req.params.id);
 
@@ -79,7 +81,7 @@ const updateContact = async (req, res) => {
 
     contact = await Contact.findByIdAndUpdate(
       req.params.id,
-      { name, company, phone, email, notes },
+      { name, company, phone, email, address, notes, status },
       { new: true }
     );
 
